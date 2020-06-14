@@ -697,4 +697,4 @@ async def roulette(ctx,color,bet=10):
             await ctx.send("Oof "+ctx.author.mention+", you lost "+str(bet)+" slaves. Good luck next time!")
         _save()
 
-bot.run('NTQyMDI3NTM3NDk3MTk0NTA1.XtgSvw.7E7z8GpOyiXtZQm3nZWX5DixQfk')
+bot.run('TOKEN')
