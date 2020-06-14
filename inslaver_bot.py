@@ -456,14 +456,13 @@ async def image(ctx, *, search=""):
 async def gif(ctx, *, search=""):
     embed = discord.Embed()
     session = aiohttp.ClientSession()
-    
+    flag=1
     if search == '':
         response = await session.get('https://api.giphy.com/v1/gifs/random?api_key=qcC6nU945riNO4xoV4ZYU63rYBadeaeQ')
         data = json.loads(await response.text())
         embed.set_image(url=data['data']['images']['original']['url'])
     else:
         try:
-            flag=1
             search.replace(' ', '+')
             response = await session.get('http://api.giphy.com/v1/gifs/search?q=' + search + '&api_key=qcC6nU945riNO4xoV4ZYU63rYBadeaeQ&limit=10')
             data = json.loads(await response.text())
