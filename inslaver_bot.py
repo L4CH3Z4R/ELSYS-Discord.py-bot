@@ -1,6 +1,4 @@
 prefix = "~"
-DirPictures = 'C:\\Users\\monib\\Desktop\\Spam Pics for bot\\'
-DirGIFs = 'C:\\Users\\monib\\Desktop\\Spam gifs for bot\\'
 import random
 import asyncio
 import urllib.request
@@ -12,6 +10,7 @@ from discord.ext import commands
 from discord import Game
 import logging
 import json
+import aiohttp
 bot = commands.Bot(command_prefix=prefix, self_bot=False)
 bot.remove_command("help")
 @bot.event
@@ -22,7 +21,6 @@ async def on_ready():
         with open('amounts.json') as f:
             amounts = json.load(f)
     except FileNotFoundError:
-        print("Could not load amounts.json")
         amounts = {}
     print("Ready to troll")
 
@@ -124,16 +122,18 @@ async def help(ctx,comm=""):
         await ctx.send(embed=embed)
     elif comm.lower()== "image":
         embed=discord.Embed(
-            description="Sends a random image.(May not work if there are porblems with files being sent in discord)",
+            description="Sends an image with the given tags, if no tag is given sends a random image.(May not work if there are porblems with files being sent in discord)",
             color=discord.Color.blue()
             )
+        embed.add_field(name="Usage",value="`image [tags]`")
         embed.set_author(name="image")
         await ctx.send(embed=embed)
     elif comm.lower()== "gif":
         embed=discord.Embed(
-            description="Sends a random gif.(May not work if there are porblems with files being sent in discord)",
+            description="Sends a gif with the given tags, if no tag is given sends a random gif.(May not work if there are porblems with files being sent in discord)",
             color=discord.Color.blue()
             )
+        embed.add_field(name="Usage",value="`gif [tags]`")
         embed.set_author(name="gif")
         await ctx.send(embed=embed)
     elif comm.lower()== "insult":
@@ -435,14 +435,46 @@ async def insult(ctx,*,args=''):
     return await ctx.send(args+" "+insult_text.text)
 
 @bot.command()
-async def image(ctx):
-    UpImage = random.choice(os.listdir(DirPictures)) 
-    await ctx.send(file=discord.File(DirPictures+UpImage))
+async def image(ctx, *, search=""):
+    embed = discord.Embed()
+    if search == '':
+        response="https://loremflickr.com/320/240?random="+str(random.randint(1,10000))
+        embed.set_image(url=response)
+    else:
+        try:
+            session = aiohttp.ClientSession()
+            search.replace(' ', ',')
+            response=await session.get("https://loremflickr.com/json/320/240/"+search+"/all")
+            data = json.loads(await response.text())
+            embed.set_image(url=data["file"])
+            await session.close()
+        except:
+            return await ctx.send("Couldn't find image with the given tag or something went wrong.")
+    await ctx.send(embed=embed)
 
 @bot.command()
-async def gif(ctx):
-    UpImage = random.choice(os.listdir(DirGIFs)) 
-    await ctx.send(file=discord.File(DirGIFs+UpImage))
+async def gif(ctx, *, search=""):
+    embed = discord.Embed()
+    session = aiohttp.ClientSession()
+    
+    if search == '':
+        response = await session.get('https://api.giphy.com/v1/gifs/random?api_key=qcC6nU945riNO4xoV4ZYU63rYBadeaeQ')
+        data = json.loads(await response.text())
+        embed.set_image(url=data['data']['images']['original']['url'])
+    else:
+        try:
+            flag=1
+            search.replace(' ', '+')
+            response = await session.get('http://api.giphy.com/v1/gifs/search?q=' + search + '&api_key=qcC6nU945riNO4xoV4ZYU63rYBadeaeQ&limit=10')
+            data = json.loads(await response.text())
+            gif_choice = random.randint(0, 9)
+            embed.set_image(url=data['data'][gif_choice]['images']['original']['url'])
+        except:
+            await ctx.send("Couldn't find gifs with the given tag or something went wrong.")
+            flag=0
+    await session.close()
+    if(flag):
+        await ctx.send(embed=embed)
 
 @bot.command(aliases=["8ball"])
 async def _8ball(ctx,*,question):
